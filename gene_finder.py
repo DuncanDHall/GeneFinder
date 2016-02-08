@@ -9,9 +9,12 @@ YOUR HEADER COMMENT HERE
 import random
 from amino_acids import aa_table  # , aa, valid_codons
 from datetime import datetime
-from load import load_seq
+# from load import load_seq
+from load import load_contigs
 
-dna = load_seq('./data/X73525.fa')
+contigs = load_contigs()
+
+dna = contigs[6][1]  # load_seq('./data/X73525.fa')
 print('started compile  %s' % datetime.now())
 
 
@@ -77,7 +80,8 @@ def get_complement(nucleotide):
     try:
         return nucleotide_complements[nucleotide]
     except:
-        raise Exception('DNA input contains invalid character')
+        return nucleotide
+        # raise Exception('DNA input contains invalid character')
         # this isn't working...
 
 
@@ -300,7 +304,7 @@ def get_AA_from_coding_strand(dna):
     """
     # Done: passes doctests
 
-    return ''.join([aa_table[codon] for codon in get_codons(dna)])
+    return ''.join([aa_table[codon] for codon in get_codons(dna) if codon in aa_table])
     # I have verified that all possible codons are included in aa_table
 
 
@@ -311,15 +315,18 @@ def get_probable_AA_sequence(dna):
         returns: a list of all amino acid sequences coded by the sequence dna.
     >>> get_probable_AA_sequence("ATGCCCGCTTT")
     """
-    threshold_length = len(get_longest_ORF_noncoding(dna, 1500))
-    longest_ORF = get_longest_ORF(dna)
-    if len(longest_ORF) >= threshold_length:
-        return get_AA_from_coding_strand(longest_ORF)
-    else:
-        return 'No one gene found with confidence.'
+    threshold_length = 1000  # len(get_longest_ORF_noncoding(dna, 100))
+    all_orfs = get_all_ORFs(dna)
+    # try:
+    return [get_AA_from_coding_strand(ORF) for ORF in all_orfs
+                if len(ORF) >= threshold_length]
+    # except:
+    #     raise RuntimeError('no ORFs found')
+
 
 if __name__ == "__main__":
     start_time = datetime.now()
+    print(dna)
     print(get_probable_AA_sequence(dna))
     print('finished execution in %s' % (datetime.now() - start_time))
     # import doctest
